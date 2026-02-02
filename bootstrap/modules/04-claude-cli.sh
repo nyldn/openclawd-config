@@ -74,7 +74,8 @@ install() {
             log_progress "Downloading Claude CLI from official source"
 
             # Download installer to temporary file
-            local install_url="https://install.claude.ai/cli"
+            # Official installation: curl -fsSL https://claude.ai/install.sh | bash
+            local install_url="https://claude.ai/install.sh"
             local claude_installer
             claude_installer=$(mktemp)
 

@@ -114,5 +114,9 @@ data/
 /openclaw-interactive-test/
 .docker-build-cache/
 
+# Work in Progress
+.work-in-progress/
+!.work-in-progress/README.md
+
 # Keep Directory Structure
 !.gitkeep
