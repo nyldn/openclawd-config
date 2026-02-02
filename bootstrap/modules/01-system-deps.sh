@@ -16,6 +16,8 @@ LIB_DIR="$(dirname "$SCRIPT_DIR")/lib"
 source "$LIB_DIR/logger.sh"
 # shellcheck source=../lib/validation.sh
 source "$LIB_DIR/validation.sh"
+# shellcheck source=../lib/package-manager.sh
+source "$LIB_DIR/package-manager.sh"
 
 # Check if module is already installed
 check_installed() {
@@ -46,13 +48,10 @@ check_installed() {
 install() {
     log_section "Installing System Dependencies"
 
-    # Update package lists
-    log_progress "Updating apt package lists"
-    if ! sudo apt-get update -qq; then
-        log_error "Failed to update package lists"
+    # Update package lists (cached)
+    if ! cached_apt_update; then
         return 1
     fi
-    log_success "Package lists updated"
 
     # Install packages
     # Note: python3.11-venv is required for Debian 12, python3-venv alone is insufficient
@@ -73,14 +72,9 @@ install() {
         software-properties-common
     )
 
-    log_progress "Installing system packages: ${packages[*]}"
-
-    if ! sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "${packages[@]}"; then
-        log_error "Failed to install system packages"
+    if ! install_packages "${packages[@]}"; then
         return 1
     fi
-
-    log_success "System packages installed successfully"
 
     # Configure locale
     log_progress "Configuring locale"

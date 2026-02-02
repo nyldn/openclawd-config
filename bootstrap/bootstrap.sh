@@ -20,6 +20,8 @@ source "$SCRIPT_DIR/lib/network.sh"
 source "$SCRIPT_DIR/lib/interactive.sh"
 # shellcheck source=lib/dependency-resolver.sh
 source "$SCRIPT_DIR/lib/dependency-resolver.sh"
+# shellcheck source=lib/summary.sh
+source "$SCRIPT_DIR/lib/summary.sh"
 
 # Configuration
 STATE_DIR="$HOME/.openclaw"
@@ -357,6 +359,7 @@ install_module() {
 
             if [[ "$installed_version" == "$version" ]]; then
                 log_success "Module is up to date"
+                summary_module_skipped "$module"
                 return 0
             else
                 log_info "Upgrading from v$installed_version to v$version"
@@ -364,9 +367,13 @@ install_module() {
         fi
     fi
 
+    # Track module start time
+    summary_module_start "$module"
+
     # Run installation
     if [[ "$DRY_RUN" == "true" ]]; then
         log_info "[DRY RUN] Would install module: $module v$version"
+        summary_module_success "$module"
         return 0
     fi
 
@@ -382,8 +389,10 @@ install_module() {
         # Run validation
         if bash "$module_file" validate; then
             log_success "Module validation passed: $module"
+            summary_module_success "$module"
         else
             log_warn "Module validation failed: $module"
+            summary_module_failed "$module"
             return 1
         fi
 
@@ -394,6 +403,7 @@ install_module() {
     else
         log_error "Module installation failed: $module"
         log_debug "Working directory after failure: $(pwd)"
+        summary_module_failed "$module"
         return 1
     fi
 }
@@ -607,6 +617,9 @@ main() {
     # Initialize state
     init_state
 
+    # Initialize summary tracking
+    summary_init
+
     # Handle validation-only mode
     if [[ "$VALIDATE_ONLY" == "true" ]]; then
         validate_installation
@@ -699,23 +712,18 @@ main() {
         fi
     done
 
-    # Summary
-    log_section "Installation Summary"
-
-    if [[ ${#failed_modules[@]} -eq 0 ]]; then
-        log_success "All modules installed successfully"
-    else
-        log_warn "Some modules failed to install:"
-        for module in "${failed_modules[@]}"; do
-            echo "  - $module"
-        done
-    fi
+    # Show detailed summary
+    summary_show
 
     # Update global version
     sed -i.bak "s/^version: .*/version: \"$BOOTSTRAP_VERSION\"/" "$STATE_FILE"
     rm -f "$STATE_FILE.bak"
 
-    log_success "Bootstrap installation complete!"
+    if [[ ${#failed_modules[@]} -eq 0 ]]; then
+        log_success "Bootstrap installation complete!"
+    else
+        log_warn "Bootstrap installation completed with errors"
+    fi
     echo ""
     log_info "Next steps:"
     echo "  1. Configure API keys in ~/openclaw-workspace/.env"
