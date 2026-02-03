@@ -63,7 +63,7 @@ See [docs/INSTALLATION.md](docs/INSTALLATION.md) for detailed installation optio
 
 **Claude Code CLI install notes:**
 - macOS: `brew install --cask claude-code`
-- Linux: `curl -fsSL https://claude.ai/install.sh | bash`
+- Linux: `curl -fsSL https://claude.ai/install.sh -o /tmp/claude-install.sh && bash /tmp/claude-install.sh`
 - Node.js 18+ only required for deprecated npm install flows
 - `ripgrep` is usually included; if `claude` search fails, see Claude search troubleshooting
 Claude Octopus requires the Claude CLI; if it isn't installed yet, rerun later with:

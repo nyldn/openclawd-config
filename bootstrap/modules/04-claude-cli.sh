@@ -116,7 +116,11 @@ install() {
                 fi
             else
                 log_warn "Homebrew not found; using official install script"
-                if curl -fsSL "$CLAUDE_INSTALL_URL" | bash; then
+                local claude_installer
+                claude_installer=$(mktemp)
+                trap 'rm -f "$claude_installer"' RETURN
+
+                if curl -fsSL -o "$claude_installer" "$CLAUDE_INSTALL_URL" && bash "$claude_installer"; then
                     log_success "Claude CLI installed via install script"
                 else
                     log_error "Claude CLI install script failed"
@@ -126,7 +130,11 @@ install() {
             fi
         else
             log_info "Installing Claude Code via official install script"
-            if curl -fsSL "$CLAUDE_INSTALL_URL" | bash; then
+            local claude_installer
+            claude_installer=$(mktemp)
+            trap 'rm -f "$claude_installer"' RETURN
+
+            if curl -fsSL -o "$claude_installer" "$CLAUDE_INSTALL_URL" && bash "$claude_installer"; then
                 log_success "Claude CLI installed via install script"
             else
                 log_error "Claude CLI install script failed"
@@ -143,7 +151,7 @@ install() {
         if ! ensure_claude_path; then
             log_error "Claude CLI not found after installation"
             log_info "Try reloading your shell: source ~/.bashrc (or ~/.zshrc)"
-            log_info "Manual install: curl -fsSL https://claude.ai/install.sh | bash"
+            log_info "Manual install: curl -fsSL https://claude.ai/install.sh -o /tmp/claude-install.sh && bash /tmp/claude-install.sh"
             return 1
         fi
     fi
